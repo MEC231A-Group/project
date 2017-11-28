@@ -41,7 +41,7 @@ end
 
 % input Bounded Constrain
 for i=1:N
-    Constr=[Constr [0.8;-3]<=u(:,i)<=[0.8;300]];
+    Constr=[Constr [0.8;-pi]<=u(:,i)<=[0.8;pi]];
 end
 
 %State Bounded Constrain
