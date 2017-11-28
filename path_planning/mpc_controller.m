@@ -1,4 +1,4 @@
-function [new_path]=mpc_controller(z0Bar,z_ref,o_data)
+function [new_path,plan_path]=mpc_controller(z0Bar,z_ref,o_data)
 %% Set N and Final
 N=20;
 Ts=0.1;
@@ -28,10 +28,10 @@ end
 
 % Obstabel avoid
 if size(o_data,1)~=0
-    for n=1:5
+    for n=1:20
         for l=1:size(o_data,1)
                 Constr = [Constr ...
-                ((z(1,n)-o_data(l,1))^2+(z(2,n)-o_data(l,2))^2)>=0.04];
+                ((z(1,n)-o_data(l,1))^2+(z(2,n)-o_data(l,2))^2)>=0.01];
         
         end
     end
@@ -58,7 +58,7 @@ Constr=[Constr z(:,1)==z0Bar];
 
 %% Using Opimize
 % Set options for YALMIP and solver
-options = sdpsettings('verbose',1,'solver','fmincon','usex0',1,'fmincon.maxit',100);
+options = sdpsettings('verbose',1,'solver','fmincon','usex0',1,'fmincon.maxit',200);
 sol = optimize(Constr, J, options);
 
 %% Get Optimized Input
@@ -67,7 +67,8 @@ uOpt=double(u);
 v=uOpt(1,1);
 omega=uOpt(2,1);
 z_next=zOpt(:,2);
-new_path=zOpt(1:5,1:2);
+new_path=zOpt(1:10,1:2);
+plan_path=zOpt(1:20,1:2);
 
 
 

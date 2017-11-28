@@ -16,7 +16,7 @@ prm = robotics.PRM(mapInflated);
 prm.NumNodes = 200;
 prm.ConnectionDistance = 10;
 
-startLocation = [3 5];
+startLocation = [4 12.5];
 endLocation = [28 13];
 path = findpath(prm, startLocation, endLocation)
 
@@ -103,7 +103,7 @@ z_ref = [28 13];
   y = aa(2)+bb;
   theta=(180/pi)*aa(3)+bb;
   [range,angle]=robot.getRangeData;
-  data=[ theta range (180/pi)*angle (180/pi).*angle+theta x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+  data=[ theta range (180/pi)*angle (180/pi).*angle+theta x+range.*cos(angle+theta) y+range.*sin(angle+theta)]
   o_data=[];
   for i=1:21
       if ~isnan(data(i,2)) 
@@ -122,16 +122,21 @@ z_ref = [28 13];
   
   obs_ref=[];
   for i=1:size(get_dis,1)
-      if get_dis(i)<=1
+      if get_dis(i)<=4
          obs_ref=[obs_ref;ob_data(i,:)];
       end
   end
           
 robotCurrentPose = robot.getRobotPose;
-[new_path] = mpc_controller(robotCurrentPose,z_ref,obs_ref)
+[new_path,plan_path] = mpc_controller(robotCurrentPose,z_ref,obs_ref)
+figure(1)
+hold all
+for i=1:20
+    plot(plan_path(i,1),plan_path(i,2),'*')
+end
 %%
 controller = robotics.PurePursuit
-controller.Waypoints = new_path;
+controller.Waypoints = new_path(10,:);
 controller.DesiredLinearVelocity = 0.8;
 controller.MaxAngularVelocity = pi;
 controller.LookaheadDistance = 0.5;
