@@ -1,4 +1,4 @@
-function [new_path,plan_path]=mpc_controller(z0Bar,z_ref,o_data)
+function [plan_path]=mpc_controller(z0Bar,z_ref,o_data)
 %% Set N and Final
 N=20;
 Ts=0.1;
@@ -41,7 +41,7 @@ end
 
 % input Bounded Constrain
 for i=1:N
-    Constr=[Constr [0;-300]<=u(:,i)<=[0.8;300]];
+    Constr=[Constr [0.8;-3]<=u(:,i)<=[0.8;300]];
 end
 
 %State Bounded Constrain
@@ -67,8 +67,7 @@ uOpt=double(u);
 v=uOpt(1,1);
 omega=uOpt(2,1);
 z_next=zOpt(:,2);
-new_path=zOpt(1:10,1:2);
-plan_path=zOpt(1:20,1:2);
+plan_path=zOpt(1:N+1,1:2);
 
 
 
