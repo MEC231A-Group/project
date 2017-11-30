@@ -89,8 +89,11 @@ z_ref = endLocation;
 robotCurrentPose = robot.getRobotPose;
 [plan_path] = mpc_controller(robotCurrentPose,z_ref,obs_ref);
 figure(1)
+
 hold all
+
 plot(plan_path(:,1),plan_path(:,2),'o')
+
 %%  Use Pure Pursuit to contorl the car
 controller = robotics.PurePursuit
 

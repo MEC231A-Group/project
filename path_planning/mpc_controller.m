@@ -20,7 +20,7 @@ f=@(z,u) [z(1)+Ts*u(1)*cos(z(3));...
 Constr=[];
 for k=1:N
     Constr=[Constr z(:,k+1)==f(z(:,k),u(:,k))];
-    J=J+(z(1,k)-z_ref(1))^2+(z(2,k)-z_ref(2))^2;
+    J=J+100*(z(1,k)-z_ref(1))^2+100*(z(2,k)-z_ref(2))^2;
    
     % Obstabel avoid
 
