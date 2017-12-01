@@ -35,40 +35,43 @@ plan_path=[];
 % Continue use MPC and PRM until reach the goal or hit the obstacle
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     z_ref = endLocation;
-    aa=robot.getRobotPose;
-    bb=zeros(21,1);
-    x = aa(1)+bb;
-    y = aa(2)+bb;
-    theta=aa(3)+bb;
-    [range,angle]=robot.getRangeData;
-    data=[ (180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
-    
-    % Get valid laser data
-    o_data=[];
-    for i=1:21
-        if ~isnan(data(i,2))
-            o_data=[o_data; data(i,5:6)];
-        end
-    end
-    ob_data=o_data;
-    
-    % Get obstacle distance from robot
-    o_data(:,1)=o_data(:,1)-aa(1);
-    o_data(:,2)=o_data(:,2)-aa(2);
-    
-    get_dis=[];
-    for i=1:size(o_data,1)
-        get_dis=[get_dis;norm(o_data(i,:))];
-    end
-    
-    % Get within 20m distace range laser data
-    obs_ref=[];
-    for i=1:size(get_dis,1)
-        if get_dis(i)<=20
-            obs_ref=[obs_ref;ob_data(i,:)];
-        end
-    end
-    
+
+      aa=robot.getRobotPose;
+      bb=zeros(21,1);
+      x = aa(1)+bb;
+      y = aa(2)+bb;
+      theta=aa(3)+bb;
+      [range,angle]=robot.getRangeData;
+      data=[ (180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+
+      % Get valid laser data
+      o_data=[];
+      for i=1:21
+          if ~isnan(data(i,2)) 
+              o_data=[o_data; data(i,5:6)];
+          end
+      end
+      ob_data=o_data;
+
+     % Get obstacle distance from robot
+      o_data(:,1)=o_data(:,1)-aa(1);
+      o_data(:,2)=o_data(:,2)-aa(2);
+       
+      % range and get_dis are the same, so is there a need for this
+      % function?
+      get_dis=[];
+      for i=1:size(o_data,1)
+          get_dis=[get_dis;norm(o_data(i,:))];
+      end
+
+      % Get within 20m distace range laser data 
+      obs_ref=[];
+      for i=1:size(get_dis,1)
+          if get_dis(i)<=20
+             obs_ref=[obs_ref;ob_data(i,:)];
+          end
+      end
+
     % Using MPC path planer
     robotCurrentPose = robot.getRobotPose;
     [get_path,sol] = mpc_controller(robotCurrentPose,z_ref,obs_ref);
