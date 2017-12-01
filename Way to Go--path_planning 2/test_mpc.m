@@ -56,7 +56,9 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
      % Get obstacle distance from robot
       o_data(:,1)=o_data(:,1)-aa(1);
       o_data(:,2)=o_data(:,2)-aa(2);
-
+       
+      % range and get_dis are the same, so is there a need for this
+      % function?
       get_dis=[];
       for i=1:size(o_data,1)
           get_dis=[get_dis;norm(o_data(i,:))];
