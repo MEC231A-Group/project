@@ -3,21 +3,19 @@ clear;
 close all;
 clc;
 
-% set robotset and enable function
+% Set robotsimulator and enable function
 robotRadius = 0.3;
 robot = RobotSimulator();
 robot.enableLaser(true);
 robot.setRobotSize(robotRadius);
 robot.showTrajectory(true);
 
-%% set start point and goal
-
+%% Set start point and goal
 % Set START to BEGIN
 startLocation = [2.725 14.08];
 figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
-
 
 % Set GOAL to REACH
 endLocation = [14.38 2.225];
@@ -26,15 +24,16 @@ hold all
 plot(endLocation(1),endLocation(2),'x')
 
 
-%% set up the inial position
+%% Set up the inial position and pose
 initialOrientation = -pi/4;
 robotCurrentLocation = startLocation;
 robotCurrentPose = [robotCurrentLocation initialOrientation];
 robot.setRobotPose(robotCurrentPose);
 
 plan_path=[];
+
 %% Use MPC to do path planing
-%% Continue use MPC and PRM until reach the goal or hit the obstacle
+% Continue use MPC and PRM until reach the goal or hit the obstacle
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     z_ref = endLocation;
       aa=robot.getRobotPose;
@@ -45,7 +44,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
       [range,angle]=robot.getRangeData;
       data=[ (180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
 
-      % get valid laser date
+      % Get valid laser data
       o_data=[];
       for i=1:21
           if ~isnan(data(i,2)) 
@@ -54,7 +53,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
       end
       ob_data=o_data;
 
-     % get obstacle distance from robot
+     % Get obstacle distance from robot
       o_data(:,1)=o_data(:,1)-aa(1);
       o_data(:,2)=o_data(:,2)-aa(2);
 
@@ -63,7 +62,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
           get_dis=[get_dis;norm(o_data(i,:))];
       end
 
-      % get within 20m distace range laser data 
+      % Get within 20m distace range laser data 
       obs_ref=[];
       for i=1:size(get_dis,1)
           if get_dis(i)<=20
@@ -75,15 +74,15 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     robotCurrentPose = robot.getRobotPose;
     [get_path,sol] = mpc_controller(robotCurrentPose,z_ref,obs_ref);
     
-    % if the result is not successfully solved, then use the previous ones.
+    % If the result is not successfully solved, then use the previous ones.
     % And reduce the size if use the previous ones.
-    % if the path size too small to use, then use PRM get new plan_path.
+    % If the path size too small to use, then use PRM get new plan_path.
     if sol.problem==0
         plan_path=get_path;
     elseif size(plan_path,1)>=8
         plan_path=plan_path(8:end,:);
     else
-        % copy the curent path and inflate each occupancy grid
+        % Copy the curent path and inflate each occupancy grid
         mapInflated = copy(robot.Map);
         inflate(mapInflated,robotRadius);
 
@@ -109,43 +108,41 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
             
     end
     
-    %
     figure(1)
     hold all
 
     plot(plan_path(:,1),plan_path(:,2),'.')
-%
+    
     %  Use Pure Pursuit to contorl the car
     controller = robotics.PurePursuit;
 
-    % feed the certain length(13 steps) desird path to controller
+    % Feed the certain length (10 steps) desired path to controller
     if size(plan_path,1)>=10
         controller.Waypoints = plan_path(1:10,:);
     else
         controller.Waypoints = plan_path(1:end,:);
     end
 
-    %The maximum angular velocity acts as a saturation limit for rotational velocity
+    % The maximum angular velocity acts as a saturation limit for rotational velocity
     controller.DesiredLinearVelocity = 0.4;
     controller.MaxAngularVelocity = 20;
 
     % As a general rule, the lookahead distance should be larger than the desired
     % linear velocity for a smooth path. The robot might cut corners when the
     % lookahead distance is large. In contrast, a small lookahead distance can
-    % result in an unstable path following behavior. A value of 0.5 m was chosen
+    % result in an unstable path following behavior. A value of 0.6 m was chosen
     % for this example.
     controller.LookaheadDistance = 0.6;
 
     % The controller runs at 10 Hz.
     controlRate = robotics.Rate(10);
 
-    % set conditon for loop leaving
+    % Set conditon for loop leaving
     robotCurrentLocation = robotCurrentPose(1:2);
     robotGoal = controller.Waypoints(end,:);
     distanceToGoal = norm(robotCurrentLocation - robotGoal);
     
-    
-    % Drvie robot 50 times or close(0.03) to desired path end point 
+    % Drive robot 50 times or close(0.02) to desired path end point 
     flag=0;
     while ( distanceToGoal > 0.02 && flag<50)       
         [v, omega] = controller(robot.getRobotPose);
@@ -154,8 +151,6 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         distanceToGoal = norm(robotCurrentPose(1:2) - robotGoal);
         flag=flag+1;
         waitfor(controlRate);
-        
-
     end
 
     %drive(robot, v, omega);
