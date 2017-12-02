@@ -44,6 +44,7 @@ for i = 1 : PRMPathSize - 1
     optPRMPoints(i,:) = circleFreePoints(optNormIndex,:);
 end
 
+%% Code to plot the PRM and optPRM points for tuning
 figure(1)
 show(map);
 

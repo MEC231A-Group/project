@@ -36,39 +36,39 @@ plan_path=[];
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     z_ref = endLocation;
 
-      aa=robot.getRobotPose;
-      bb=zeros(21,1);
-      x = aa(1)+bb;
-      y = aa(2)+bb;
-      theta=aa(3)+bb;
-      [range,angle]=robot.getRangeData;
-      data=[ (180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+      aa = robot.getRobotPose;
+      bb = zeros(21,1);
+      x = aa(1) + bb;
+      y = aa(2) + bb;
+      theta = aa(3) + bb;
+      [range,angle] = robot.getRangeData;
+      data = [(180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
 
       % Get valid laser data
-      o_data=[];
-      for i=1:21
+      o_data = [];
+      for i = 1:21
           if ~isnan(data(i,2)) 
-              o_data=[o_data; data(i,5:6)];
+              o_data = [o_data; data(i,5:6)];
           end
       end
-      ob_data=o_data;
+      ob_data = o_data;
 
      % Get obstacle distance from robot
-      o_data(:,1)=o_data(:,1)-aa(1);
-      o_data(:,2)=o_data(:,2)-aa(2);
+      o_data(:,1) = o_data(:,1) - aa(1);
+      o_data(:,2) = o_data(:,2) - aa(2);
        
       % range and get_dis are the same, so is there a need for this
       % function?
-      get_dis=[];
-      for i=1:size(o_data,1)
-          get_dis=[get_dis;norm(o_data(i,:))];
+      get_dis = [];
+      for i = 1:size(o_data, 1)
+          get_dis = [get_dis; norm(o_data(i,:))];
       end
 
       % Get within 20m distace range laser data 
-      obs_ref=[];
-      for i=1:size(get_dis,1)
-          if get_dis(i)<=20
-             obs_ref=[obs_ref;ob_data(i,:)];
+      obs_ref = [];
+      for i = 1:size(get_dis,1)
+          if get_dis(i) <= 20
+             obs_ref = [obs_ref;ob_data(i,:)];
           end
       end
 
@@ -79,10 +79,10 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     % If the result is not successfully solved, then use the previous ones.
     % And reduce the size if use the previous ones.
     % If the path size too small to use, then use PRM get new plan_path.
-    if sol.problem==0
-        plan_path=get_path;
-    elseif size(plan_path,1)>=8
-        plan_path=plan_path(8:end,:);
+    if sol.problem == 0
+        plan_path = get_path;
+    elseif size(plan_path,1) >= 8
+        plan_path = plan_path(8:end,:);
     else
         % Copy the curent path and inflate each occupancy grid
         mapInflated = copy(robot.Map);
@@ -90,7 +90,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         
         % Using PRM (probolistic roadmap method) to find path
         prm = robotics.PRM(mapInflated);
-        % Set # of ramdon points
+        % Set # of random points
         prm.NumNodes = 200;
         prm.ConnectionDistance = 1;
         
@@ -119,7 +119,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     controller = robotics.PurePursuit;
     
     % Feed the certain length (10 steps) desired path to controller
-    if size(plan_path,1)>=10
+    if size(plan_path,1) >= 10
         controller.Waypoints = plan_path(1:10,:);
     else
         controller.Waypoints = plan_path(1:end,:);
@@ -146,12 +146,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     
     % Drive robot 50 times or close(0.02) to desired path end point
     flag=0;
-    while ( distanceToGoal > 0.02 && flag<50)
+    while ( distanceToGoal > 0.02 && flag < 50)
         [v, omega] = controller(robot.getRobotPose);
         drive(robot, v, omega);
         robotCurrentPose = robot.getRobotPose;
         distanceToGoal = norm(robotCurrentPose(1:2) - robotGoal);
-        flag=flag+1;
+        flag = flag + 1;
         waitfor(controlRate);
     end
     
