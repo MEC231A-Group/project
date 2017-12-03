@@ -1,6 +1,6 @@
 function [plan_path,sol] = mpc_controller(z0Bar,z_ref,obs_ref)
 %% Set N-steps prediction
-N = 20;
+N = 5;
 
 %% The state is 2DOF (x,y), r is soft constraint
 z = sdpvar(2,N+1);
@@ -57,7 +57,7 @@ Constr = [Constr z(:,1) == z0Bar(1:2)];
 % Set options for YALMIP and solver
 % Choose maximum iterations to 350 to speed up
 % Choose algorithm ('trust-region-reflective','sqp','sqp-legacy','interior-point')
-options = sdpsettings('verbose',1,'solver','fmincon','fmincon.maxit',350, ...
+options = sdpsettings('verbose',0,'solver','fmincon','fmincon.maxit',350, ...
     'fmincon.algorithm','interior-point');
 sol = optimize(Constr, J, options);
 

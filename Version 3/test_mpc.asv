@@ -37,29 +37,27 @@ plan_path=[];
 mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
-PointNo=2
+PointNo
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
-    if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
-        PointNo=PointNo+1
-    end
-    z_ref = optPRMPoints(PointNo,:)
-    
-    aa = robot.getRobotPose;
-    bb = zeros(21,1);
-    x = aa(1) + bb;
-    y = aa(2) + bb;
-    theta = aa(3) + bb;
-    [range,angle] = robot.getRangeData;
-    data = [(180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+      
+     z_ref = optPRMPoints(1,:)
 
-    % Get valid laser data
-    o_data = [];
-    for i = 1:21
-      if ~isnan(data(i,2)) 
-          o_data = [o_data; data(i,5:6)];
+      aa = robot.getRobotPose;
+      bb = zeros(21,1);
+      x = aa(1) + bb;
+      y = aa(2) + bb;
+      theta = aa(3) + bb;
+      [range,angle] = robot.getRangeData;
+      data = [(180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+
+      % Get valid laser data
+      o_data = [];
+      for i = 1:21
+          if ~isnan(data(i,2)) 
+              o_data = [o_data; data(i,5:6)];
+          end
       end
-    end
-    ob_data = o_data;
+      ob_data = o_data;
 
      % Get obstacle distance from robot
       o_data(:,1) = o_data(:,1) - aa(1);

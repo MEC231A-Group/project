@@ -32,7 +32,7 @@ figure(1)
 show(map);
 hold all
 
-for i = 2 : PRMPathSize - 1
+for i = 2 : PRMPathSize-1
     centre = plan_path(i,:);
     theta = linspace(0,2*pi,circleRes).';
     circlePoints = [circleRadius.*cos(theta) + centre(1), circleRadius.*sin(theta) + centre(2)];
