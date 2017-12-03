@@ -42,7 +42,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
         PointNo=PointNo+1
     end
-    if PointNo=size(optPRMPoints,1)
+    if PointNo==size(optPRMPoints,1)
         z_ref=endLocation;
     else
         z_ref = optPRMPoints(PointNo,:)
