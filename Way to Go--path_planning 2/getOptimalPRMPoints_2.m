@@ -4,7 +4,7 @@ function optPRMPoints = getOptimalPRMPoints(map,startLocation,endLocation)
 prm = robotics.PRM(map);
 % Set # of ramdon points
 prm.NumNodes = 50;
-prm.ConnectionDistance = 2.5;
+prm.ConnectionDistance = 2;
 
 plan_path = findpath(prm, startLocation, endLocation);
 
@@ -24,14 +24,15 @@ PRMPathSize = size(plan_path,1);
 optPRMPoints = zeros(PRMPathSize,2);
 
 % Set resolution and radius of circle around PRM
-circleRes = 30;
-circleRadius = 1;
+circleRes = 50;
+circleRadius = 0.5;
+refLocation = endLocation;
 
-figure(1)
-show(map);
+figure
 hold all
+show(map);
 
-for i = 2 : PRMPathSize - 1
+for i = PRMPathSize - 1 : -1: 2
     centre = plan_path(i,:);
     theta = linspace(0,2*pi,circleRes).';
     circlePoints = [circleRadius.*cos(theta) + centre(1), circleRadius.*sin(theta) + centre(2)];
@@ -43,28 +44,25 @@ for i = 2 : PRMPathSize - 1
     hold all
     circleNormDist = zeros(size(circleFreePoints,1),1);
     for j = 1 : size(circleFreePoints,1)
-        circleNormDist(j) = norm(circleFreePoints(j,:) - endLocation);
+        circleNormDist(j) = norm(circleFreePoints(j,:) - refLocation);
     end
     optNormDist = min(circleNormDist);
     optNormIndex = find(circleNormDist == optNormDist);
     optPRMPoints(i,:) = circleFreePoints(optNormIndex,:);
+    refLocation = optPRMPoints(i,:);
 end
 
 %% Code to plot the PRM and optPRM points for tuning
 
-figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
 
-figure(1)
 hold all
 plot(endLocation(1),endLocation(2),'x')
 
-figure(1)
 hold all
 plot(plan_path(:,1),plan_path(:,2),'.');
 
-figure(1)
 hold all
 plot(optPRMPoints(:,1),optPRMPoints(:,2),'+');
 

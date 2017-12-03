@@ -17,11 +17,11 @@ Constr = [];
 for k = 1:N
      Constr = [Constr 0 <= r(1,k) <= 0.05];
      Constr = [Constr ...
-         ((z(1,k+1)-z(1,k))^2 + (z(2,k+1) - z(2,k))^2) <= r(1,k)];
+         ((z(1,k+1) - z(1,k))^2 + (z(2,k+1) - z(2,k))^2) <= r(1,k)];
             % Obstacle avoidance
              for l = 1:size(obs_ref,1)
                 Constr = [Constr ...
-                ((z(1,k) - obs_ref(l,1))^2 + (z(2,k)-obs_ref(l,2))^2) >= 0.4];
+                ((z(1,k) - obs_ref(l,1))^2 + (z(2,k) - obs_ref(l,2))^2) >= 0.4];
              end
              % Seems to fail to avoid
      J = J + r(1,k)^2 + (z(1,k) - z_ref(1))^2 + (z(2,k) - z_ref(2))^2;   
