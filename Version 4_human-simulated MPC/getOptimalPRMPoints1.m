@@ -21,6 +21,8 @@ while isempty(plan_path)
     plan_path = findpath(prm,startLocation, endLocation);
 end
 
+prm.NumNodes
+
 PRMPathSize = size(plan_path,1);
 optPRMPoints = zeros(PRMPathSize,2);
 
@@ -31,6 +33,18 @@ circleRadius = 1;
 figure(1)
 show(map);
 hold all
+
+figure(1)
+hold all
+plot(startLocation(1),startLocation(2),'o')
+
+figure(1)
+hold all
+plot(endLocation(1),endLocation(2),'x')
+
+figure(1)
+hold all
+plot(plan_path(:,1),plan_path(:,2),'.');
 
 for i = 2 : PRMPathSize-1
     centre = plan_path(i,:);
@@ -48,22 +62,14 @@ for i = 2 : PRMPathSize-1
     end
     optNormDist = min(circleNormDist);
     optNormIndex = find(circleNormDist == optNormDist);
+    % This condition to ensure only 1 optimum norm index is chosen
+    if (size(optNormIndex,1) > 1)
+        optNormIndex = optNormIndex(1);
+    end
     optPRMPoints(i,:) = circleFreePoints(optNormIndex,:);
 end
 
 %% Code to plot the PRM and optPRM points for tuning
-
-figure(1)
-hold all
-plot(startLocation(1),startLocation(2),'o')
-
-figure(1)
-hold all
-plot(endLocation(1),endLocation(2),'x')
-
-figure(1)
-hold all
-plot(plan_path(:,1),plan_path(:,2),'.');
 
 figure(1)
 hold all
