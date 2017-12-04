@@ -100,6 +100,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
             plan_path = optPRMPoints(PointNo+1:end,:);
         end
     end
+    
         
 %         Copy the curent path and inflate each occupancy grid
 %         mapInflated = copy(robot.Map);
@@ -130,7 +131,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     figure(1)
     hold all
     
-    plot(plan_path(:,1),plan_path(:,2),'.')
+    plot(plan_path(:,1),plan_path(:,2),'x')
     
     %  Use Pure Pursuit to contorl the car
     controller = robotics.PurePursuit;

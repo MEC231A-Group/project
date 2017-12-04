@@ -30,9 +30,9 @@ optPRMPoints = zeros(PRMPathSize,2);
 circleRes = 30;
 circleRadius = 1;
 
-figure(1)
-show(map);
-hold all
+% figure(1)
+% show(map);
+% hold all
 
 figure(1)
 hold all

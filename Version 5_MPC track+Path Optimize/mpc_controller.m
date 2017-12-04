@@ -81,7 +81,7 @@ sol = optimize(Constr, J, options);
 thetaOpt = double(theta);
 rOpt = double(r);
 plan_path=[];
-for i=1:N
+for k=1:N
     localOpt_buffer= tf_localxy(thetaOpt(k),rOpt(k));
     xOpt_local(k) = localOpt_buffer(1);
     yOpt_local(k) = localOpt_buffer(2);
@@ -93,7 +93,8 @@ for i=1:N
     globalOpt_buffer= tf_globalxy(xOpt_local(k),yOpt_local(k),x,y,beta);
     xOpt_global(k) = globalOpt_buffer(1);
     yOpt_global(k) = globalOpt_buffer(2);
-    plan_path=[plan_path;xOpt_global(k) yOpt_global(k)];
+    plan_path=[plan_path;xOpt_global(k) yOpt_global(k)]
+    
 end
 
 
