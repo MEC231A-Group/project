@@ -9,7 +9,9 @@ clc;
 
 % Set robotsimulator and enable function
 robotRadius = 0.3;
+%%
 robot = RobotSimulator();
+%%
 robot.enableLaser(true);
 robot.setRobotSize(robotRadius);
 robot.showTrajectory(true);
@@ -40,8 +42,10 @@ plan_path=[];
 % Get optimized PRM circle waypoints as z_ref
 mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
+%% Here is where the map gets inflated
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
 PointNo=3
+%%
 while norm(robotCurrentPose(1:2) - endLocation)>0.05
     yalmip('clear')
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
