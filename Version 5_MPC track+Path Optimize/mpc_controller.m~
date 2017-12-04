@@ -10,8 +10,7 @@ for m=1:21
         laser(m,1)=5;
     end
 end
-%% redeu the feasible region given the size of robot(0.3)
-laser(:,1)=laser(:,1)-0.5;
+%% Set
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot

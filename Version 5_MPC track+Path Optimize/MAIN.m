@@ -15,7 +15,7 @@ robot = RobotSimulator();
 robot.enableLaser(true);
 robot.setRobotSize(robotRadius);
 robot.showTrajectory(true);
-
+% 
 %% Set start point and goal
 % Set START to BEGIN
 startLocation = [2.725 14.08];
