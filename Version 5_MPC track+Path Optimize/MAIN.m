@@ -44,7 +44,7 @@ mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 %% Here is where the map gets inflated
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
-PointNo=3
+PointNo=2
 %%
 while norm(robotCurrentPose(1:2) - endLocation)>0.05
     yalmip('clear')
@@ -91,34 +91,41 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     % If the path size too small to use, then use PRM get new plan_path.
     if sol.problem == 0
         plan_path = get_path;
-    elseif size(plan_path,1) >= 8
-        plan_path = plan_path(8:end,:);
+%     elseif size(plan_path,1) >= 8
+%         plan_path = plan_path(8:end,:);
     else
-        % Copy the curent path and inflate each occupancy grid
-        mapInflated = copy(robot.Map);
-        inflate(mapInflated,robotRadius);
-        
-        % Using PRM (probolistic roadmap method) to find path
-        prm = robotics.PRM(mapInflated);
-        % Set # of random points
-        prm.NumNodes = 200;
-        prm.ConnectionDistance = 1;
-        
-        plan_path = findpath(prm, robotCurrentPose(1:2), endLocation);
-        
-        while isempty(plan_path)
-            % No feasible path found yet, increase the number of nodes
-            prm.NumNodes = prm.NumNodes + 50;
-            
-            % Use the |update| function to re-create the PRM roadmap with the changed
-            % attribute
-            update(prm);
-            
-            % Search for a feasible path with the updated PRM
-            plan_path = findpath(prm,robotCurrentPose(1:2), endLocation);
+        % if MPC doesn't solve, then drive to the next optPRM point
+        plan_path = optPRMPoints(PointNo:end,:);
+        if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
+            plan_path = optPRMPoints(PointNo+1:end,:);
         end
-        
     end
+        
+%         Copy the curent path and inflate each occupancy grid
+%         mapInflated = copy(robot.Map);
+%         inflate(mapInflated,robotRadius);
+%         
+%         % Using PRM (probolistic roadmap method) to find path
+%         prm = robotics.PRM(mapInflated);
+%         % Set # of random points
+%         prm.NumNodes = 200;
+%         prm.ConnectionDistance = 1;
+%         
+%         plan_path = findpath(prm, robotCurrentPose(1:2), endLocation);
+        
+%         while isempty(plan_path)
+%             % No feasible path found yet, increase the number of nodes
+%             prm.NumNodes = prm.NumNodes + 50;
+%             
+%             % Use the |update| function to re-create the PRM roadmap with the changed
+%             % attribute
+%             update(prm);
+%             
+%             % Search for a feasible path with the updated PRM
+%             plan_path = findpath(prm,robotCurrentPose(1:2), endLocation);
+%         end
+        
+%     end
     
     figure(1)
     hold all
@@ -128,12 +135,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     %  Use Pure Pursuit to contorl the car
     controller = robotics.PurePursuit;
     
-    % Feed the certain length (10 steps) desired path to controller
-    if size(plan_path,1) >= 10
-        controller.Waypoints = plan_path(1:10,:);
-    else
-        controller.Waypoints = plan_path(1:end,:);
-    end
+    % Feed the middle point of plan_path to the pursuit controller
+%     if size(plan_path,1) >= 10
+%         controller.Waypoints = plan_path(1:10,:);
+%     else
+    controller.Waypoints = plan_path(1:ceil(end/2),:);
+%     end
     
     % The maximum angular velocity acts as a saturation limit for rotational velocity
     controller.DesiredLinearVelocity = 0.4;
