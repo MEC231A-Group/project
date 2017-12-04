@@ -1,9 +1,10 @@
-function [plan_path,sol] = mpc_controller(pose,z_ref,laser)
-%% Use NOn-Convex set and Convex MPC to tracking the Optimal Path. 
-
+%% Use NOn-Convex set and Convex MPC to tracking the Optimal Path.
+%%
+function [plan_path,sol] = mpc_controller(pose,z_ref,laser) 
 %% Set N-steps prediction
 N = 10;
-% transform nan into a large number
+% Transform nan into a large number
+% The maximum laser range is 5;
 for m=1:21
     if isnan(laser(m,1))
         laser(m,1)=5;
@@ -75,7 +76,8 @@ options = sdpsettings('verbose',1,'solver','fmincon','fmincon.maxit',350, ...
     'fmincon.algorithm','interior-point');
 sol = optimize(Constr, J, options);
 
-%% Get Optimized Input
+%% Get Optimized Path
+% Filter the infeasible points
 thetaOpt = double(theta);
 rOpt = double(r);
 plan_path=[];
