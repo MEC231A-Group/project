@@ -1,13 +1,16 @@
-function [plan_path,sol] = mpc_controller(pose,z_ref,laser)
-%% Use human-simulated prior sector in this version of MPC
+%% Use NOn-Convex set and Convex MPC to tracking the Optimal Path.
+%%
+function [plan_path,sol] = mpc_controller(pose,z_ref,laser) 
 %% Set N-steps prediction
 N = 10;
-% transform nan into a large number
+% Transform nan into a large number
+% The maximum laser range is 5;
 for m=1:21
     if isnan(laser(m,1))
         laser(m,1)=5;
     end
 end
+%% Set
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot
@@ -21,6 +24,9 @@ beta=pose(3);
 
 % fitting the non-convex set into convex set
 convex_set=Polyhedron('V',[x_local_fe,y_local_fe]);
+
+% We are trying to use this convex set to get global minimum first 
+% Then we filter the infeasible points given the feasible set
 
 %% Define the local cart coordinate transfrom and global cart coordinate transfrom
 tf_localxy=@(theta,r) [r*cos(theta);r*sin(theta)]; % get[x_local,y_local]
@@ -71,11 +77,12 @@ options = sdpsettings('verbose',1,'solver','fmincon','fmincon.maxit',350, ...
     'fmincon.algorithm','interior-point');
 sol = optimize(Constr, J, options);
 
-%% Get Optimized Input
+%% Get Optimized Path
+% Filter the infeasible points
 thetaOpt = double(theta);
 rOpt = double(r);
 plan_path=[];
-for i=1:N
+for k=1:N
     localOpt_buffer= tf_localxy(thetaOpt(k),rOpt(k));
     xOpt_local(k) = localOpt_buffer(1);
     yOpt_local(k) = localOpt_buffer(2);
@@ -87,7 +94,8 @@ for i=1:N
     globalOpt_buffer= tf_globalxy(xOpt_local(k),yOpt_local(k),x,y,beta);
     xOpt_global(k) = globalOpt_buffer(1);
     yOpt_global(k) = globalOpt_buffer(2);
-    plan_path=[plan_path;xOpt_global(k) yOpt_global(k)];
+    plan_path=[plan_path;xOpt_global(k) yOpt_global(k)]
+    
 end
 
 
