@@ -1,53 +1,71 @@
-function [plan_path,sol] = mpc_controller(pose,z_ref,laser)
-%% Use human-simulated prior sector in this version of MPC
+%% Use NOn-Convex set and Convex MPC to tracking the Optimal Path.
+%%
+function [plan_path,sol] = mpc_controller(pose,z_ref,laser) 
 %% Set N-steps prediction
-N = 5;
-% transform nan into a large number
+N = 10;
+% Transform nan into a large number
+% The maximum laser range is 5;
 for m=1:21
     if isnan(laser(m,1))
-        laser(m,1)=20;
+        laser(m,1)=5;
     end
 end
 %% The state of each step is in polar coordinates of the robot(r,theta)
-t = sdpvar(1,N+1); % theta, relative to the robot
+theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot
 
+% x,y,beta is the global coordinate position
 x=pose(1);
 y=pose(2);
 beta=pose(3);
-%% Define objective function
+%% Convert feasible robot(r,theta)_local fram into feasible robot(x,y)_local fram 
+[x_local_fe,y_local_fe]=pol2cart(laser(:,2),laser(:,1));
+
+% fitting the non-convex set into convex set
+convex_set=Polyhedron('V',[x_local_fe,y_local_fe]);
+
+% We are trying to use this convex set to get global minimum first 
+% Then we filter the infeasible points given the feasible set
+
+%% Define the local cart coordinate transfrom and global cart coordinate transfrom
+tf_localxy=@(theta,r) [r*cos(theta);r*sin(theta)]; % get[x_local,y_local]
+tf_globalxy=@(x_local,y_local,x,y,beta) [x;y]+[cos(beta) -sin(beta); sin(beta) cos(beta)]*[x_local;y_local];
+% get [x_global;y_global]
+%% Define objective function and Constr and close factor 'a'
 J = 0;
 Constr = [];
-threshold=10; % threshold distance to consider an obstacle
-safety=8; % safety distance for the farthest time step to land,<threshold
+a = 0.05^2;
+%% Define Initial Constranints;
+% Convert to local cart coordinate
+local_buffer = tf_localxy(theta(1),r(1));
+x_local(1) = local_buffer(1);
+y_local(1) = local_buffer(2);
+% Convert to global cart coordinate
+global_buffer = tf_globalxy(x_local(1),y_local(1),x,y,beta);
+x_global(1) = global_buffer(1);
+y_global(1) = global_buffer(2);
+% let each point close to each other engouh
+Constr = [Constr x_local(1)^2+y_local(1)^2<=a];
+% Constr the point inside the local convex_set
+Constr = [Constr convex_set.H(:,1:2)*[x_local(1);y_local(1)]<=convex_set.H(:,3)]
+% Penalize the distance to reference
+J=J+ (x_global(1)-z_ref(1))^2+(y_global(1)-z_ref(2))^2;
 %% Define Constraints
-for k = 1:N
-    % take the 4 central sectors as the prior sector, laser No.9-13
-    % if no obstacle exists in prior sector, set it as the feasible set
-    if all(laser(9:13,1))>threshold
-        Constr = [Constr laser(9,2)<t(k)<laser(13,2) 0<r(k)<safety];
-    else
-        % find the safest sector, where obstacle is assumedly the farthest
-        [max_range inx]=max(laser(:,1));
-        % update safety distance
-        if max_range<safety
-            safety=max_range;
-        end
-        % locate its sector, and assign the new feasible set to that sector
-        if 1<=inx<=4
-            Constr = [Constr laser(1,2)<t(k)<laser(4,2) 0<r(k)<safety];
-        elseif 5<=inx<=8
-            Constr = [Constr laser(5,2)<t(k)<laser(8,2) 0<r(k)<safety];
-        elseif 14<=inx<=17
-            Constr = [Constr laser(14,2)<t(k)<laser(17,2) 0<r(k)<safety];
-        elseif 18<=inx<=21
-            Constr = [Constr laser(18,2)<t(k)<laser(21,2) 0<r(k)<safety];
-        end
-    end
-    % calculate absolute (x,y) of each time step
-    z=[x+r(k).*cos(t(k)+beta) y+r(k).*sin(t(k)+beta)];
-    Contstr = 
-    J = J + (z(1) - z_ref(1))^2 + (z(2) - z_ref(2))^2;   
+for k = 2:N
+    % Convert to local cart coordinate
+    local_buffer= tf_localxy(theta(k),r(k));
+    x_local(k) = local_buffer(1);
+    y_local(k) = local_buffer(2);
+    % Convert to global cart coordinate
+    global_buffer= tf_globalxy(x_local(k),y_local(k),x,y,beta);
+    x_global(k) = global_buffer(1);
+    y_global(k) = global_buffer(2);
+    % let each point close to each other engouh
+    Constr= [Constr ((x_local(k)-x_local(k-1))^2+(y_local(k)-y_local(k-1))^2)<=a];
+    % Constr the point inside the local convex_set
+    Constr = [Constr convex_set.H(:,1:2)*[x_local(k);y_local(k)]<=convex_set.H(:,3)]; 
+    % Penalize the distance to reference
+    J=J+ (x_global(k)-z_ref(1))^2+(y_global(k)-z_ref(2))^2; 
 end
 
 %% Using Optimize
@@ -58,11 +76,25 @@ options = sdpsettings('verbose',1,'solver','fmincon','fmincon.maxit',350, ...
     'fmincon.algorithm','interior-point');
 sol = optimize(Constr, J, options);
 
-%% Get Optimized Input
-tOpt = double(t);
+%% Get Optimized Path
+% Filter the infeasible points
+thetaOpt = double(theta);
 rOpt = double(r);
-zOpt = [];
-for i=1:N
-    zOpt = [zOpt;x+rOpt(i).*cos(tOpt(i)+beta) y+rOpt(i).*sin(tOpt(i)+beta)];
+plan_path=[];
+for i=k:N
+    localOpt_buffer= tf_localxy(thetaOpt(k),rOpt(k));
+    xOpt_local(k) = localOpt_buffer(1);
+    yOpt_local(k) = localOpt_buffer(2);
+
+    % find the point that is not inside the local feasible non_convex_set
+    if ~inpolygon(xOpt_local(k),yOpt_local(k),x_local_fe,y_local_fe)
+        break;
+    end
+    globalOpt_buffer= tf_globalxy(xOpt_local(k),yOpt_local(k),x,y,beta);
+    xOpt_global(k) = globalOpt_buffer(1);
+    yOpt_global(k) = globalOpt_buffer(2);
+    plan_path=[plan_path;xOpt_global(k) yOpt_global(k)];
 end
-plan_path = zOpt;
+
+
+

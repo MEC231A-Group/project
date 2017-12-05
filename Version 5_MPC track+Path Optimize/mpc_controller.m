@@ -2,7 +2,7 @@
 %%
 function [plan_path,sol] = mpc_controller(pose,z_ref,laser) 
 %% Set N-steps prediction
-N = 10;
+N = 20;
 % Transform nan into a large number
 % The maximum laser range is 5;
 for m=1:21
@@ -10,6 +10,7 @@ for m=1:21
         laser(m,1)=5;
     end
 end
+laser(:,1)=laser(:,1)-0.5;
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot
@@ -81,7 +82,7 @@ sol = optimize(Constr, J, options);
 thetaOpt = double(theta);
 rOpt = double(r);
 plan_path=[];
-for i=1:N
+for k=1:N
     localOpt_buffer= tf_localxy(thetaOpt(k),rOpt(k));
     xOpt_local(k) = localOpt_buffer(1);
     yOpt_local(k) = localOpt_buffer(2);

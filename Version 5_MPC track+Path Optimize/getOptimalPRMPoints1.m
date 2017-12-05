@@ -30,9 +30,9 @@ optPRMPoints = zeros(PRMPathSize,2);
 circleRes = 30;
 circleRadius = 1;
 
-figure(1)
-show(map);
-hold all
+% figure(1)
+% show(map);
+% hold all
 
 figure(1)
 hold all
@@ -46,7 +46,7 @@ figure(1)
 hold all
 plot(plan_path(:,1),plan_path(:,2),'.');
 
-for i = 2 : PRMPathSize-1
+for i = 1 : PRMPathSize
     centre = plan_path(i,:);
     theta = linspace(0,2*pi,circleRes).';
     circlePoints = [circleRadius.*cos(theta) + centre(1), circleRadius.*sin(theta) + centre(2)];

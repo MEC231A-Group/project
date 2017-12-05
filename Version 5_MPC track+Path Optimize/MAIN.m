@@ -44,17 +44,33 @@ mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 %% Here is where the map gets inflated
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
-PointNo=2
+%PointNo=2
 %%
-while norm(robotCurrentPose(1:2) - endLocation)>0.05
+read=0;
+while norm(robotCurrentPose(1:2) - endLocation)>0.1
+
     yalmip('clear')
-    if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
-        PointNo=PointNo+1
+    N_optPRM=size(optPRMPoints,1);
+    dis_optPRM=[];
+    for i=1:N_optPRM
+        dis_optPRM=[dis_optPRM;norm(robotCurrentPose(1:2)-optPRMPoints(i,:))]
     end
-    if PointNo==size(optPRMPoints,1)
+    [dis_min,PointNo]=min(dis_optPRM);
+    dis_nextPRM=2;
+    if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<dis_nextPRM
+         PointNo=PointNo+1
+    end
+    if PointNo==N_optPRM+1
+        PointNo=N_optPRM;
+    end
+    if robotCurrentPose(1:2)==read
+        PointNo=PointNo-1;
+    read=robotCurrentPose(1:2);
+    z_ref = optPRMPoints(PointNo,:)
+    if PointNo==N_optPRM
         z_ref=endLocation;
-    else
-        z_ref = optPRMPoints(PointNo,:)
+%     else
+%         z_ref = optPRMPoints(PointNo,:)
     end
     
     pose = robot.getRobotPose;
@@ -96,7 +112,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     else
         % if MPC doesn't solve, then drive to the next optPRM point
         plan_path = optPRMPoints(PointNo:end,:);
-        if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
+        if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<dis_nextPRM
             plan_path = optPRMPoints(PointNo+1:end,:);
         end
     end
@@ -129,7 +145,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     
     figure(1)
     hold all
-    
+    plan_path
     plot(plan_path(:,1),plan_path(:,2),'.')
     
     %  Use Pure Pursuit to contorl the car
@@ -163,7 +179,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     
     % Drive robot 50 times or close(0.02) to desired path end point
     flag=0;
-    while ( distanceToGoal > 0.05 && flag < 50)
+    while ( distanceToGoal > 0.1 && flag < 30)
         [v, omega] = controller(robot.getRobotPose);
         drive(robot, v, omega);
         robotCurrentPose = robot.getRobotPose;
