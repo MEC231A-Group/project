@@ -18,7 +18,8 @@ robot.showTrajectory(true);
 
 %% Set start point and goal
 % Set START to BEGIN
-startLocation = [2.725 14.08];
+% startLocation = [2.725 14.08];
+startLocation = [2.7 1];
 figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
@@ -30,7 +31,7 @@ hold all
 plot(endLocation(1),endLocation(2),'x')
 
 %% Set up the inial position and pose
-initialOrientation = -pi/4;
+initialOrientation = pi/2;
 robotCurrentLocation = startLocation;
 robotCurrentPose = [robotCurrentLocation initialOrientation];
 robot.setRobotPose(robotCurrentPose);
@@ -47,8 +48,8 @@ optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
 %PointNo=2
 %%
 read=0;
+M = [];
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
-
     yalmip('clear')
     N_optPRM=size(optPRMPoints,1);
     dis_optPRM=[];
@@ -58,7 +59,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     [dis_min,PointNo]=min(dis_optPRM);
     dis_nextPRM=2;
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<dis_nextPRM
-         PointNo=PointNo+1
+        PointNo=PointNo+1
     end
     if PointNo==N_optPRM+1
         PointNo=N_optPRM;
@@ -70,46 +71,46 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     z_ref = optPRMPoints(PointNo,:)
     if PointNo==N_optPRM
         z_ref=endLocation;
-%     else
-%         z_ref = optPRMPoints(PointNo,:)
+        %     else
+        %         z_ref = optPRMPoints(PointNo,:)
     end
     
     pose = robot.getRobotPose;
     [range,angle] = robot.getRangeData;
     laser=[range angle];
-%     bb = zeros(21,1);
-%     x = aa(1) + bb;
-%     y = aa(2) + bb;
-%     beta = aa(3) + bb;
+    %     bb = zeros(21,1);
+    %     x = aa(1) + bb;
+    %     y = aa(2) + bb;
+    %     beta = aa(3) + bb;
     
-%    data=[(180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
+    %    data=[(180/pi)*theta range (180/pi)*angle (180/pi).*(angle+theta) x+range.*cos(angle+theta) y+range.*sin(angle+theta)];
     % Write laser data and use it in MPC
-
-%     o_data = [];
-%     for i = 1:21
-%       if ~isnan(data(i,2)) 
-%           o_data = [o_data; data(i,5:6)]; %[range angle]
-%       end
-%     end
-%     obs_ref = [];
-%     % Filter: exlude obstacle data that's 20m farther from robot 
-%     for i = 1:size(o_data, 1)
-%         if o_data(i,1)<20
-%             obs_ref = [obs_ref;odata(i,:)]; % [range angle]
-%         end
-%     end
-
+    
+    %     o_data = [];
+    %     for i = 1:21
+    %       if ~isnan(data(i,2))
+    %           o_data = [o_data; data(i,5:6)]; %[range angle]
+    %       end
+    %     end
+    %     obs_ref = [];
+    %     % Filter: exlude obstacle data that's 20m farther from robot
+    %     for i = 1:size(o_data, 1)
+    %         if o_data(i,1)<20
+    %             obs_ref = [obs_ref;odata(i,:)]; % [range angle]
+    %         end
+    %     end
+    
     % Using MPC path planer
     robotCurrentPose = robot.getRobotPose;
-    [get_path,sol] = mpc_controller(robotCurrentPose,z_ref,laser);
+    [get_path,sol,plotHandles] = mpc_controller(robotCurrentPose,z_ref,laser);
     
     % If the result is not successfully solved, then use the previous ones.
     % And reduce the size if use the previous ones.
     % If the path size too small to use, then use PRM get new plan_path.
     if sol.problem == 0
         plan_path = get_path;
-%     elseif size(plan_path,1) >= 8
-%         plan_path = plan_path(8:end,:);
+        %     elseif size(plan_path,1) >= 8
+        %         plan_path = plan_path(8:end,:);
     else
         % if MPC doesn't solve, then drive to the next optPRM point
         plan_path = optPRMPoints(PointNo:end,:);
@@ -117,32 +118,32 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
             plan_path = optPRMPoints(PointNo+1:end,:);
         end
     end
-        
-%         Copy the curent path and inflate each occupancy grid
-%         mapInflated = copy(robot.Map);
-%         inflate(mapInflated,robotRadius);
-%         
-%         % Using PRM (probolistic roadmap method) to find path
-%         prm = robotics.PRM(mapInflated);
-%         % Set # of random points
-%         prm.NumNodes = 200;
-%         prm.ConnectionDistance = 1;
-%         
-%         plan_path = findpath(prm, robotCurrentPose(1:2), endLocation);
-        
-%         while isempty(plan_path)
-%             % No feasible path found yet, increase the number of nodes
-%             prm.NumNodes = prm.NumNodes + 50;
-%             
-%             % Use the |update| function to re-create the PRM roadmap with the changed
-%             % attribute
-%             update(prm);
-%             
-%             % Search for a feasible path with the updated PRM
-%             plan_path = findpath(prm,robotCurrentPose(1:2), endLocation);
-%         end
-        
-%     end
+    
+    %         Copy the curent path and inflate each occupancy grid
+    %         mapInflated = copy(robot.Map);
+    %         inflate(mapInflated,robotRadius);
+    %
+    %         % Using PRM (probolistic roadmap method) to find path
+    %         prm = robotics.PRM(mapInflated);
+    %         % Set # of random points
+    %         prm.NumNodes = 200;
+    %         prm.ConnectionDistance = 1;
+    %
+    %         plan_path = findpath(prm, robotCurrentPose(1:2), endLocation);
+    
+    %         while isempty(plan_path)
+    %             % No feasible path found yet, increase the number of nodes
+    %             prm.NumNodes = prm.NumNodes + 50;
+    %
+    %             % Use the |update| function to re-create the PRM roadmap with the changed
+    %             % attribute
+    %             update(prm);
+    %
+    %             % Search for a feasible path with the updated PRM
+    %             plan_path = findpath(prm,robotCurrentPose(1:2), endLocation);
+    %         end
+    
+    %     end
     
     figure(1)
     hold all
@@ -153,11 +154,11 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     controller = robotics.PurePursuit;
     
     % Feed the middle point of plan_path to the pursuit controller
-%     if size(plan_path,1) >= 10
-%         controller.Waypoints = plan_path(1:10,:);
-%     else
+    %     if size(plan_path,1) >= 10
+    %         controller.Waypoints = plan_path(1:10,:);
+    %     else
     controller.Waypoints = plan_path(1:ceil(end/2),:);
-%     end
+    %     end
     
     % The maximum angular velocity acts as a saturation limit for rotational velocity
     controller.DesiredLinearVelocity = 0.4;
@@ -187,8 +188,20 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         distanceToGoal = norm(robotCurrentPose(1:2) - robotGoal);
         flag = flag + 1;
         waitfor(controlRate);
+        % saves frame for movie
+        M = [M, getframe];
     end
     
     %drive(robot, v, omega);
+%     for i = 1 : length(plotHandles)
+%         set(plotHandles(i),'Visible','off');
+%     end
+delete(plotHandles)
 end
-
+%% write frames as .avi file
+% v = VideoWriter('movie.avi');
+% open(v);
+% for i = 1:length(M);
+%     writeVideo(v,M(i));
+% end
+% close(v);

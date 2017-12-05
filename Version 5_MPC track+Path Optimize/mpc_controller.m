@@ -1,16 +1,57 @@
 %% Use NOn-Convex set and Convex MPC to tracking the Optimal Path.
 %%
-function [plan_path,sol] = mpc_controller(pose,z_ref,laser) 
+function [plan_path,sol,plotHandles] = mpc_controller(pose,z_ref,laser) 
 %% Set N-steps prediction
 N = 20;
 % Transform nan into a large number
-% The maximum laser range is 5;
+laserMaxrange = 5;
 for m=1:21
     if isnan(laser(m,1))
-        laser(m,1)=5;
+        laser(m,1)=laserMaxrange;
     end
 end
+range = laser(:,1);
+angle = laser(:,2);
 laser(:,1)=laser(:,1)-0.5;
+
+%% Plot LIDAR points and feasible sets
+plotHandles = [];
+points = [range.*cos(angle+pose(3)) + pose(1), range.*sin(angle+pose(3)) + pose(2)];
+plotHandles = [plotHandles, plot(points(:,1), points(:,2), 'rx')];
+robotCurrentLocation = [pose(1), pose(2)];
+for m=1:20
+    if (range(m) < laserMaxrange) && (range(m+1) < laserMaxrange)
+        V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
+        P(m) = Polyhedron(V_lidar);
+        plotHandles = [plotHandles, plot(P(m),'alpha', 0.2)];
+%         A(:,:,m) = P.A;
+%         b(:,m) = P.b;
+    end
+    if (range(m) == laserMaxrange) && (range(m+1) == laserMaxrange)
+        V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
+        P(m) = Polyhedron(V_lidar);
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+%         A(:,:,m) = P.A;
+%         b(:,m) = P.b;
+    end
+    if (range(m) < laserMaxrange) && (range(m+1) == laserMaxrange)
+        temp_point = [range(m).*cos(angle(m+1)+pose(3)) + pose(1), range(m).*sin(angle(m+1)+pose(3)) + pose(2)];
+        V_lidar = [robotCurrentLocation; points(m,:); temp_point];
+        P(m) = Polyhedron(V_lidar);
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+%         A(:,:,m) = P.A;
+%         b(:,m) = P.b;
+    end
+    if (range(m) == laserMaxrange) && (range(m+1) < laserMaxrange)
+        temp_point = [range(m+1).*cos(angle(m)+pose(3)) + pose(1), range(m+1).*sin(angle(m)+pose(3)) + pose(2)];
+        V_lidar = [robotCurrentLocation; temp_point; points(m+1,:)];
+        P(m) = Polyhedron(V_lidar);
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+%         A(:,:,m) = P.A;
+%         b(:,m) = P.b;
+    end
+end
+
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot
