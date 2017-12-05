@@ -18,7 +18,15 @@ robot.showTrajectory(true);
 % 
 %% Set start point and goal
 % Set START to BEGIN
-startLocation = [2.725 14.08];
+%%
+%Test 1
+%startLocation = [2.725 14.08];
+%initialOrientation = -pi/4;
+%%
+%Test 2
+startLocation = [2.275 0.775];
+initialOrientation = pi/4;
+%%
 figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
@@ -30,7 +38,7 @@ hold all
 plot(endLocation(1),endLocation(2),'x')
 
 %% Set up the inial position and pose
-initialOrientation = -pi/4;
+
 robotCurrentLocation = startLocation;
 robotCurrentPose = [robotCurrentLocation initialOrientation];
 robot.setRobotPose(robotCurrentPose);
@@ -46,7 +54,7 @@ inflate(mapInflated,robotRadius);
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
 PointNo=2
 %%
-while norm(robotCurrentPose(1:2) - endLocation)>0.05
+while norm(robotCurrentPose(1:2) - endLocation)>0.1
     yalmip('clear')
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
         PointNo=PointNo+1
@@ -145,14 +153,14 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     
     % The maximum angular velocity acts as a saturation limit for rotational velocity
     controller.DesiredLinearVelocity = 0.4;
-    controller.MaxAngularVelocity = 20;
+    controller.MaxAngularVelocity = 8;
     
     % As a general rule, the lookahead distance should be larger than the desired
     % linear velocity for a smooth path. The robot might cut corners when the
     % lookahead distance is large. In contrast, a small lookahead distance can
     % result in an unstable path following behavior. A value of 0.6 m was chosen
     % for this example.
-    controller.LookaheadDistance = 0.6;
+    controller.LookaheadDistance = 0.5;
     
     % The controller runs at 10 Hz.
     controlRate = robotics.Rate(10);
