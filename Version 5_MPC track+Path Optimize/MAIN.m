@@ -15,18 +15,8 @@ robot = RobotSimulator();
 robot.enableLaser(true);
 robot.setRobotSize(robotRadius);
 robot.showTrajectory(true);
-% 
 %% Set start point and goal
 % Set START to BEGIN
-%%
-%Test 1
-%startLocation = [2.725 14.08];
-%initialOrientation = -pi/4;
-%%
-%Test 2
-startLocation = [2.275 0.775];
-initialOrientation = pi/4;
-%%
 figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
@@ -38,7 +28,6 @@ hold all
 plot(endLocation(1),endLocation(2),'x')
 
 %% Set up the inial position and pose
-
 robotCurrentLocation = startLocation;
 robotCurrentPose = [robotCurrentLocation initialOrientation];
 robot.setRobotPose(robotCurrentPose);
@@ -128,7 +117,6 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
             plan_path = optPRMPoints(PointNo+1:end,:);
         end
     end
-    
         
 %         Copy the curent path and inflate each occupancy grid
 %         mapInflated = copy(robot.Map);
@@ -158,13 +146,8 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     
     figure(1)
     hold all
-<<<<<<< HEAD
     plan_path
     plot(plan_path(:,1),plan_path(:,2),'.')
-=======
-    
-    plot(plan_path(:,1),plan_path(:,2),'x')
->>>>>>> dc624e96d73de6ec2145352b1676d58a57d19f31
     
     %  Use Pure Pursuit to contorl the car
     controller = robotics.PurePursuit;
@@ -178,14 +161,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     
     % The maximum angular velocity acts as a saturation limit for rotational velocity
     controller.DesiredLinearVelocity = 0.4;
-    controller.MaxAngularVelocity = 8;
     
     % As a general rule, the lookahead distance should be larger than the desired
     % linear velocity for a smooth path. The robot might cut corners when the
     % lookahead distance is large. In contrast, a small lookahead distance can
     % result in an unstable path following behavior. A value of 0.6 m was chosen
     % for this example.
-    controller.LookaheadDistance = 0.5;
     
     % The controller runs at 10 Hz.
     controlRate = robotics.Rate(10);
