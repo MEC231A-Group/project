@@ -65,6 +65,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     end
     if robotCurrentPose(1:2)==read
         PointNo=PointNo-1;
+    end
     read=robotCurrentPose(1:2);
     z_ref = optPRMPoints(PointNo,:)
     if PointNo==N_optPRM
