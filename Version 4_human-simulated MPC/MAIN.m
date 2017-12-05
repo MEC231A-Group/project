@@ -37,9 +37,8 @@ plan_path=[];
 mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
-PointNo=3
-while norm(robotCurrentPose(1:2) - endLocation)>0.05
-    yalmip('clear')
+PointNo=2
+while norm(robotCurrentPose(1:2) - endLocation)>0.1
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<0.8
         PointNo=PointNo+1
     end
@@ -148,7 +147,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.05
     
     % Drive robot 50 times or close(0.02) to desired path end point
     flag=0;
-    while ( distanceToGoal > 0.05 && flag < 50)
+    while ( distanceToGoal > 0.02 && flag < 50)
         [v, omega] = controller(robot.getRobotPose);
         drive(robot, v, omega);
         robotCurrentPose = robot.getRobotPose;
