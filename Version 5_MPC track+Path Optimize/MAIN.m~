@@ -175,7 +175,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     distanceToGoal = norm(robotCurrentLocation - robotGoal);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    % Drive robot 30 times or close(0.1) to desired path end point
+    % Drive robot 30 times or close(0.02) to desired path end point
     flag=0;
     while ( distanceToGoal > 0.1 && flag < 30)
         [v, omega] = controller(robot.getRobotPose);
