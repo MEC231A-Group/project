@@ -9,7 +9,6 @@ clc;
 
 % Set robotsimulator and enable function
 robotRadius = 0.3;
-%%
 robot = RobotSimulator();
 %%
 robot.enableLaser(true);
@@ -44,8 +43,31 @@ plan_path=[];
 mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 %% Here is where the map gets inflated
-optPRMPoints=getOptimalPRMPoints1(mapInflated,startLocation,endLocation)
+optPRMPoints = getOptimalPRMPoints1(mapInflated,startLocation,endLocation);
 %PointNo=2
+
+%% Define 3 walking human obstacles
+% These 3 humans will walk linearly between their start and end positions
+
+numHumans = 3;
+map = copy(robot.Map);
+
+humansStart = [8.8 2.2; 4 10.9; 2 3];
+humansEnd = [12 6.5; 12 10; 5.2 8];
+humansMoveDist = [(humansEnd(1,:) - humansStart(1,:))/86;
+    (humansEnd(2,:) - humansStart(2,:))/30;
+    (humansEnd(3,:) - humansStart(3,:))/50];
+humansWalkDirection = [1 1;1 1;1 1];
+humansCurPos = humansStart;
+
+% To initialise humans on the map
+map = moveHumans(map, humansCurPos, humansCurPos);
+robot.Map = map;
+robot.setRobotPose(robotCurrentPose);
+robot.enableLaser(true);
+robot.setRobotSize(robotRadius);
+robot.showTrajectory(true);
+
 %%
 read=0;
 M = [];
@@ -192,11 +214,35 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         M = [M, getframe];
     end
     
+    for j=1:4
+        humansEndPos = humansCurPos + humansWalkDirection.*humansMoveDist;
+        for i=1:numHumans
+            pt1 = humansEndPos(i,:);
+            pt2 = humansEnd(i,:);
+            pt3 = humansStart(i,:);
+            if (pdist([pt1;pt2],'euclidean') < 0.03)
+                humansWalkDirection(i,:) = -humansWalkDirection(i,:);
+            end
+            if (pdist([pt1;pt3],'euclidean') < 0.03)
+                humansWalkDirection(i,:) = -humansWalkDirection(i,:);
+            end
+        end
+        map = moveHumans(map, humansCurPos, humansEndPos);
+        robotCurrentPose = robot.getRobotPose;
+        robot.Map = map;
+        robot.setRobotPose(robotCurrentPose);
+        robot.enableLaser(true);
+        robot.setRobotSize(robotRadius);
+        robot.showTrajectory(true);
+        humansCurPos = humansEndPos;
+        M = [M, getframe];
+    end    
+    
     %drive(robot, v, omega);
-%     for i = 1 : length(plotHandles)
-%         set(plotHandles(i),'Visible','off');
-%     end
-delete(plotHandles)
+    %     for i = 1 : length(plotHandles)
+    %         set(plotHandles(i),'Visible','off');
+    %     end
+    delete(plotHandles)
 end
 %% write frames as .avi file
 % v = VideoWriter('movie.avi');
