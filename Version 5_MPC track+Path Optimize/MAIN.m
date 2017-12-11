@@ -189,6 +189,17 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % If the robot stay at the same place, then turn the pose and look for
+    % new feasible rigion to push robot move
+    if norm(robotCurrentPose(1:2)-read)<=0.01
+        drive(robot, 0, 20);
+        robotCurrentPose = robot.getRobotPose;
+        waitfor(controlRate);
+        continue
+    end
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     for j=1:4
         humansEndPos = humansCurPos + humansWalkDirection.*humansMoveDist;
         for i=1:numHumans
