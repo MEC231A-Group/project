@@ -1,5 +1,5 @@
 function optPRMPoints = getOptimalPRMPoints1(map,startLocation,endLocation)
-% Closest to destiny
+% Closest to destination
 
 % Using PRM (probolistic roadmap method) to find path
 prm = robotics.PRM(map);
