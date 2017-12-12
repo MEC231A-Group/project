@@ -83,6 +83,7 @@ end
 
 MPCpath_overall = {};
 robotTrajectory = [];
+MPCsolvetime = [];
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     yalmip('clear')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -123,7 +124,9 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     laser=[range angle];
     
     robotCurrentPose = robot.getRobotPose;
+    tic;
     [get_path,sol,plotHandles] = mpc_controller(robotCurrentPose,z_ref,laser);
+    MPCsolvetime = [MPCsolvetime, toc];
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % If the result is not successfully solved, then use the previous ones.
     % And reduce the size if use the previous ones.
@@ -269,6 +272,7 @@ end
 legend([p1,p2,p3,p4], 'End Location', 'PRM Points', 'Optimized PRM Points', 'Safe radius around PRM points', 'Location', 'north');
 set(fig1, 'Position', [0 0 1000 1000]);
 set(findall(gcf,'-property','FontSize'),'FontSize',20)
+saveas(fig1, 'Optimized PRM Points.svg');
 saveas(fig1, 'Optimized PRM Points.png');
 
 close all;
@@ -294,4 +298,5 @@ p4 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15, 'LineWidth',2)
 legend([p1,p2,p3,p4], 'Actual Robot Trajectory', 'MPC Planned Paths', 'Optimized PRM Points', 'End Point', 'Location', 'north');
 set(fig2, 'Position', [0 0 1000 1000]);
 set(findall(gcf,'-property','FontSize'),'FontSize',20)
+saveas(fig2, 'MPC trajectory and actual trajectory.svg');
 saveas(fig2, 'MPC trajectory and actual trajectory.png');
