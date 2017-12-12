@@ -239,7 +239,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     delete(plot_ref)
 end
 %% write frames as .avi file
-% v = VideoWriter('movie.avi');
+% v = VideoWriter('movie with humans final.avi');
 % open(v);
 % for i = 1:length(M);
 %     writeVideo(v,M(i));
