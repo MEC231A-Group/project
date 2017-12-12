@@ -118,6 +118,9 @@ for k = 2:N
     J=J+ (x_global(k)-z_ref(1))^2+(y_global(k)-z_ref(2))^2; 
 end
 
+%% Add more terminal cost for end point
+J=J+ 9*(x_global(N)-z_ref(1))^2+(y_global(N)-z_ref(2))^2;
+
 %% Using Optimize
 % Set options for YALMIP and solver
 % Choose maximum iterations to 350 to speed up

@@ -49,15 +49,9 @@ plot(plan_path(:,1),plan_path(:,2),'.');
 for i = 1 : PRMPathSize
     centre = plan_path(i,:);
     theta = linspace(0,2*pi,circleRes).';
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % xlim=[0 17.9] ylim=[0 17.2]
-    
-   if ((circleRadius.*cos(theta) + centre(1))<=17.9 ) & ((circleRadius.*sin(theta) + centre(2))<=17.2 )...
-           & ((circleRadius.*cos(theta) + centre(1))>=0 ) & ((circleRadius.*sin(theta) + centre(2))>=0 )
-           
-        circlePoints = [circleRadius.*cos(theta) + centre(1), circleRadius.*sin(theta) + centre(2)];
-        circleOccupancy = getOccupancy(map,circlePoints);
+   if ((circleRadius.*cos(theta) + centre(1))<=17.9 ) && 
+    circlePoints = [circleRadius.*cos(theta) + centre(1), circleRadius.*sin(theta) + centre(2)];
+    circleOccupancy = getOccupancy(map,circlePoints);
    end
 
     % To find not occupied points

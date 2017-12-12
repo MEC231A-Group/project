@@ -69,37 +69,38 @@ robot.setRobotSize(robotRadius);
 robot.showTrajectory(true);
 
 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% get first reference point
 read=0;
 M = [];
+N_optPRM=size(optPRMPoints,1);
+dis_optPRM=[];
+for i=1:N_optPRM
+    dis_optPRM=[dis_optPRM;norm(robotCurrentPose(1:2)-optPRMPoints(i,:))]
+end
+[dis_min,PointNo]=min(dis_optPRM);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     yalmip('clear')
-    N_optPRM=size(optPRMPoints,1);
-    dis_optPRM=[];
-    for i=1:N_optPRM
-        dis_optPRM=[dis_optPRM;norm(robotCurrentPose(1:2)-optPRMPoints(i,:))]
-    end
-    [dis_min,PointNo]=min(dis_optPRM);
-    dis_nextPRM=2;
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % dis_min>=5(2 connect point distance), then rerun PRM again to find
     % new path
-    if dis_min>=5
-        optPRMPoints=[];
-        optPRMPoints=getOptimalPRMPoints1(mapInflated,robotCurrentPose(1:2),endLocation);
-        continue;
+    if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))>=5
+            optPRMPoints=[];
+            optPRMPoints=getOptimalPRMPoints1(mapInflated,robotCurrentPose(1:2),endLocation);
+            PointNo = 1;
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    dis_nextPRM=1;
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))<dis_nextPRM
         PointNo=PointNo+1
     end
+    
     if PointNo==N_optPRM+1
         PointNo=N_optPRM;
     end
-    if robotCurrentPose(1:2)==read
-        PointNo=PointNo-1;
-    end
+
     read=robotCurrentPose(1:2);
     z_ref = optPRMPoints(PointNo,:)
     if PointNo==N_optPRM
@@ -107,6 +108,11 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         %     else
         %         z_ref = optPRMPoints(PointNo,:)
     end
+    
+    %plot reference point
+    figure(1)
+    plot_ref=[];
+    plot_ref=[plot_ref,plot(z_ref(1),z_ref(2),'go','MarkerSize',10)]
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Using MPC Local Path Planer
@@ -191,11 +197,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % If the robot stay at the same place, then turn the pose and look for
     % new feasible rigion to push robot move
-    if norm(robotCurrentPose(1:2)-read)<=0.01
-        drive(robot, 0, 20);
+    if norm(robotCurrentPose(1:2)-read)<=0.05
+        for i=1:3
+        drive(robot, -0.2, 100);
         robotCurrentPose = robot.getRobotPose;
         waitfor(controlRate);
-        continue
+        end     
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -229,6 +236,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     %         set(plotHandles(i),'Visible','off');
     %     end
     delete(plotHandles)
+    delete(plot_ref)
 end
 %% write frames as .avi file
 % v = VideoWriter('movie.avi');
