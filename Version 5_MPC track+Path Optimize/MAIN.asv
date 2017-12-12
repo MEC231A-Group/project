@@ -24,7 +24,8 @@ hold all
 plot(startLocation(1),startLocation(2),'o')
 
 % Set GOAL to REACH
-endLocation = [14.38 2.225];
+% endLocation = [14.38 2.225];
+endLocation = [3 5];
 figure(1)
 hold all
 plot(endLocation(1),endLocation(2),'x')
@@ -82,7 +83,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 MPCpath_overall = {};
-robotTrajectory = [];
+robot_trajectory = [];
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     yalmip('clear')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -193,7 +194,6 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         waitfor(controlRate);
         % saves frame for movie
         M = [M, getframe];
-        robotTrajectory = [robotTrajectory; robotCurrentPose(1:2)];
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -257,42 +257,29 @@ fig1 = gcf;
 robot_plot.setRobotPose(robotInitialPose);
 robot_plot.enableLaser(false);
 title('Plot of Optimized PRM Points');
-p1 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15, 'LineWidth',2);
+p1 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15);
 hold all;
-p2 = plot(PRMPoints(1:end-1,1), PRMPoints(1:end-1,2), 'b.', 'MarkerSize', 15, 'LineWidth',2);
+p2 = plot(PRMPoints(1:end-1,1), PRMPoints(1:end-1,2), 'b.', 'MarkerSize', 15);
 hold all;
-p3 = plot(optPRMPoints(1:end-1,1), optPRMPoints(1:end-1,2), 'r+', 'MarkerSize', 15, 'LineWidth',2);
+p3 = plot(optPRMPoints(1:end-1,1), optPRMPoints(1:end-1,2), 'r+', 'MarkerSize', 15);
 hold all;
 for i = 1:length(circlePoints_all)
-    p4 = plot(circlePoints_all{i}(:,1), circlePoints_all{i}(:,2), 'g--', 'LineWidth', 2);
+    p4 = plot(circlePoints_all{i}(:,1), circlePoints_all{i}(:,2), 'g--', 'LineWidth', 1);
     hold all;
 end
-legend([p1,p2,p3,p4], 'End Location', 'PRM Points', 'Optimized PRM Points', 'Safe radius around PRM points', 'Location', 'north');
-set(fig1, 'Position', [0 0 1000 1000]);
+legend([p1,p2,p3,p4], 'End Location', 'PRM Points', 'Optimized PRM Points', 'Safe radius around PRM points', 'Location', 'southoutside');
+set(fig1, 'Position', [0 0 800 1000]);
 set(findall(gcf,'-property','FontSize'),'FontSize',20)
 saveas(fig1, 'Optimized PRM Points.png');
 
 close all;
+robotInitialPose = [startLocation initialOrientation];
+
 robot_plot = RobotSimulator();
 fig2 = gcf;
-title('Plot of MPC and actual trajectories');
 robot_plot.setRobotPose(robotInitialPose);
 robot_plot.enableLaser(false);
-p1 = plot(robotTrajectory(:,1), robotTrajectory(:,2), 'b-', 'LineWidth', 4);
-hold all;
 for j = 1:length(MPCpath_overall)
-    if isempty(MPCpath_overall{j})
-        continue;
-    else
-        p2 = plot(MPCpath_overall{j}(:,1), MPCpath_overall{j}(:,2), 'g-','LineWidth', 2);
-        hold all;
-    end
+    plot(MPCpath_overall{i}(:,1), MPCpath_overall{i}(:,2), 'rx');
+    hold all;
 end
-p3 = plot(optPRMPoints(1:end-1,1), optPRMPoints(1:end-1,2), 'r+', 'MarkerSize', 15, 'LineWidth',2);
-hold all;
-p4 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15, 'LineWidth',2);
-
-legend([p1,p2,p3,p4], 'Actual Robot Trajectory', 'MPC Planned Paths', 'Optimized PRM Points', 'End Point', 'Location', 'north');
-set(fig2, 'Position', [0 0 1000 1000]);
-set(findall(gcf,'-property','FontSize'),'FontSize',20)
-saveas(fig2, 'MPC trajectory and actual trajectory.png');
