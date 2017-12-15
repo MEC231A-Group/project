@@ -45,7 +45,7 @@ plan_path=[];
 mapInflated = copy(robot.Map);
 inflate(mapInflated,robotRadius);
 %% Here is where the map gets inflated
-optPRMPoints = getOptimalPRMPoints1(mapInflated,startLocation,endLocation);
+[optPRMPoints, PRMPoints, circlePoints_all] = getOptimalPRMPoints1(mapInflated,startLocation,endLocation);
 %PointNo=2
 
 %% Define 3 walking human obstacles
@@ -83,15 +83,18 @@ end
 [dis_min,PointNo]=min(dis_optPRM);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+MPCpath_overall = {};
+robotTrajectory = [];
+MPCsolvetime = [];
 while norm(robotCurrentPose(1:2) - endLocation)>0.1
     yalmip('clear')
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % dis_min>=5(2 connect point distance), then rerun PRM again to find
     % new path
     if norm(robotCurrentPose(1:2)-optPRMPoints(PointNo,:))>=5
-            optPRMPoints=[];
-            optPRMPoints=getOptimalPRMPoints1(mapInflated,robotCurrentPose(1:2),endLocation);
-            PointNo = 1;
+        optPRMPoints=[];
+        optPRMPoints=getOptimalPRMPoints1(mapInflated,robotCurrentPose(1:2),endLocation);
+        PointNo = 1;
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     dis_nextPRM=1;
@@ -102,7 +105,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     if PointNo==N_optPRM+1
         PointNo=N_optPRM;
     end
-
+    
     read=robotCurrentPose(1:2);
     z_ref = optPRMPoints(PointNo,:)
     if PointNo==N_optPRM
@@ -121,11 +124,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     pose = robot.getRobotPose;
     [range,angle] = robot.getRangeData;
     laser=[range angle];
-
-    robotCurrentPose = robot.getRobotPose;
-    [get_path,sol,plotHandles] = mpc_controller(robotCurrentPose,z_ref,laser);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
     
+    robotCurrentPose = robot.getRobotPose;
+    tic;
+    [get_path,sol,plotHandles] = mpc_controller(robotCurrentPose,z_ref,laser);
+    MPCsolvetime = [MPCsolvetime, toc];
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % If the result is not successfully solved, then use the previous ones.
     % And reduce the size if use the previous ones.
     % If the path size too small to use, then use PRM get new plan_path.
@@ -141,7 +145,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %plot the path 
+    %plot the path
     figure(1)
     hold all
     plan_path
@@ -151,12 +155,12 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    MPCpath_overall{end+1} = get_path;
     %  Use Pure Pursuit to contorl the car
     controller = robotics.PurePursuit;
     
     % Feed the middle point of plan_path to the pursuit controller
-
+    
     if size(plan_path,1)~=0
         controller.Waypoints = plan_path(1:ceil(end/2),:);
     else
@@ -194,6 +198,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         waitfor(controlRate);
         % saves frame for movie
         M = [M, getframe];
+        robotTrajectory = [robotTrajectory; robotCurrentPose(1:2)];
     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -201,10 +206,10 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     % new feasible rigion to push robot move
     if norm(robotCurrentPose(1:2)-read)<=0.05
         for i=1:3
-        drive(robot, -0.2, 100);
-        robotCurrentPose = robot.getRobotPose;
-        waitfor(controlRate);
-        end     
+            drive(robot, -0.2, 100);
+            robotCurrentPose = robot.getRobotPose;
+            waitfor(controlRate);
+        end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
@@ -231,7 +236,7 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
         robot.showTrajectory(true);
         humansCurPos = humansEndPos;
         M = [M, getframe];
-    end    
+    end
     
     %drive(robot, v, omega);
     %     for i = 1 : length(plotHandles)
@@ -240,10 +245,65 @@ while norm(robotCurrentPose(1:2) - endLocation)>0.1
     delete(plotHandles)
     delete(plot_ref)
 end
-%% write frames as .avi file
+% %% write frames as .avi file
 % v = VideoWriter('movie with humans final.avi');
 % open(v);
-% for i = 1:length(M);
+% for i = 1:length(M)
 %     writeVideo(v,M(i));
 % end
 % close(v);
+%% save important plots
+close all;
+robotInitialPose = [startLocation initialOrientation];
+
+robot_plot = RobotSimulator();
+fig1 = gcf;
+robot_plot.setRobotPose(robotInitialPose);
+robot_plot.enableLaser(false);
+title('Plot of Optimized PRM Points');
+p1 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15, 'LineWidth',2);
+hold all;
+p2 = plot(PRMPoints(1:end-1,1), PRMPoints(1:end-1,2), 'b.', 'MarkerSize', 15, 'LineWidth',2);
+hold all;
+p3 = plot(optPRMPoints(1:end-1,1), optPRMPoints(1:end-1,2), 'r+', 'MarkerSize', 15, 'LineWidth',2);
+hold all;
+for i = 1:length(circlePoints_all)
+    p4 = plot(circlePoints_all{i}(:,1), circlePoints_all{i}(:,2), 'g--', 'LineWidth', 2);
+    hold all;
+end
+legend([p1,p2,p3,p4], 'End Location', 'PRM Points', 'Optimized PRM Points', '2D Euclidean ball around PRM points', 'Location', 'north');
+set(fig1, 'Position', [0 0 1000 1000]);
+set(findall(gcf,'-property','FontSize'),'FontSize',20)
+saveas(fig1, 'Optimized PRM Points.svg');
+saveas(fig1, 'Optimized PRM Points.png');
+
+delete(p3)
+legend([p1,p2,p4], 'End Location', 'PRM Points','2D Euclidean ball around PRM points', 'Location', 'north');
+saveas(fig1, 'PRM Points with circle only.svg');
+saveas(fig1, 'PRM Points with circle only.png');
+close all;
+
+robot_plot = RobotSimulator();
+fig2 = gcf;
+title('Plot of MPC and actual trajectories');
+robot_plot.setRobotPose(robotInitialPose);
+robot_plot.enableLaser(false);
+p1 = plot(robotTrajectory(:,1), robotTrajectory(:,2), 'b-', 'LineWidth', 4);
+hold all;
+for j = 1:length(MPCpath_overall)
+    if isempty(MPCpath_overall{j})
+        continue;
+    else
+        p2 = plot(MPCpath_overall{j}(:,1), MPCpath_overall{j}(:,2), 'g-','LineWidth', 2);
+        hold all;
+    end
+end
+p3 = plot(optPRMPoints(1:end-1,1), optPRMPoints(1:end-1,2), 'r+', 'MarkerSize', 15, 'LineWidth',2);
+hold all;
+p4 = plot(endLocation(1), endLocation(2), 'mx', 'MarkerSize', 15, 'LineWidth',2);
+
+legend([p1,p2,p3,p4], 'Actual Robot Trajectory', 'MPC Planned Paths', 'Optimized PRM Points', 'End Point', 'Location', 'north');
+set(fig2, 'Position', [0 0 1000 1000]);
+set(findall(gcf,'-property','FontSize'),'FontSize',20)
+saveas(fig2, 'MPC trajectory and actual trajectory.svg');
+saveas(fig2, 'MPC trajectory and actual trajectory.png');

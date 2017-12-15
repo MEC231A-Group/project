@@ -1,4 +1,4 @@
-function optPRMPoints = getOptimalPRMPoints1(map,startLocation,endLocation)
+function [optPRMPoints, PRMPoints, circlePoints_all] = getOptimalPRMPoints1(map,startLocation,endLocation)
 % Closest to destination
 
 % Using PRM (probolistic roadmap method) to find path
@@ -20,7 +20,7 @@ while isempty(plan_path)
     % Search for a feasible path with the updated PRM
     plan_path = findpath(prm,startLocation, endLocation);
 end
-
+PRMPoints = plan_path;
 prm.NumNodes
 
 PRMPathSize = size(plan_path,1);
@@ -45,6 +45,8 @@ plot(endLocation(1),endLocation(2),'x')
 figure(1)
 hold all
 plot(plan_path(:,1),plan_path(:,2),'.');
+
+circlePoints_all = cell(PRMPathSize,1);
 
 for i = 1 : PRMPathSize
     centre = plan_path(i,:);
@@ -76,6 +78,7 @@ for i = 1 : PRMPathSize
         optNormIndex = optNormIndex(1);
     end
     optPRMPoints(i,:) = circleFreePoints(optNormIndex,:);
+    circlePoints_all{i} = circleFreePoints;
 end
 
 %% Code to plot the PRM and optPRM points for tuning

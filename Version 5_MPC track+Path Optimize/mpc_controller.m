@@ -26,7 +26,7 @@ for m=1:20
         V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
         
-        plotHandles = [plotHandles, plot(P(m),'alpha', 0.2)];
+        plotHandles = [plotHandles, plot(P(m),'alpha', 0.2, 'linestyle', 'none')];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
     end
@@ -34,7 +34,7 @@ for m=1:20
         V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
         
-        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2, 'linestyle', 'none')];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
     end
@@ -43,7 +43,7 @@ for m=1:20
         V_lidar = [robotCurrentLocation; points(m,:); temp_point];
         P(m) = Polyhedron(V_lidar);
        
-        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2, 'linestyle', 'none')];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
     end
@@ -52,7 +52,7 @@ for m=1:20
         V_lidar = [robotCurrentLocation; temp_point; points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
         
-        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
+        plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2, 'linestyle', 'none')];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
     end
