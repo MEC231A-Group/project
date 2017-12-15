@@ -275,12 +275,7 @@ set(findall(gcf,'-property','FontSize'),'FontSize',20)
 saveas(fig1, 'Optimized PRM Points.svg');
 saveas(fig1, 'Optimized PRM Points.png');
 
-delete(p3)
-legend([p1,p2,p4], 'End Location', 'PRM Points','2D Euclidean ball around PRM points', 'Location', 'north');
-saveas(fig1, 'PRM Points with circle only.svg');
-saveas(fig1, 'PRM Points with circle only.png');
 close all;
-
 robot_plot = RobotSimulator();
 fig2 = gcf;
 title('Plot of MPC and actual trajectories');
