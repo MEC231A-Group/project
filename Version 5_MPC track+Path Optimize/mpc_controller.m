@@ -58,8 +58,16 @@ for m=1:20
     end
 end
 
+grid off
 xlim([0 17.9])
 ylim([0 17.2])
+
+% convex_seta=Polyhedron('V',points);
+% convex_seta.plot('alpha',0.2)
+% grid off
+% xlim([0 17.9])
+% ylim([0 17.2])
+
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
 r = sdpvar(1,N+1); % radius, relative to the robot

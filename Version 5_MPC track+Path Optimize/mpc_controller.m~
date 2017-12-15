@@ -19,11 +19,13 @@ plotHandles = [];
 points = [range.*cos(angle+pose(3)) + pose(1), range.*sin(angle+pose(3)) + pose(2)];
 plotHandles = [plotHandles, plot(points(:,1), points(:,2), 'rx')];
 robotCurrentLocation = [pose(1), pose(2)];
+
 for m=1:20
 
     if (range(m) < laserMaxrange) && (range(m+1) < laserMaxrange)
         V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
+        
         plotHandles = [plotHandles, plot(P(m),'alpha', 0.2)];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
@@ -31,6 +33,7 @@ for m=1:20
     if (range(m) == laserMaxrange) && (range(m+1) == laserMaxrange)
         V_lidar = [robotCurrentLocation; points(m,:); points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
+        
         plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
@@ -39,6 +42,7 @@ for m=1:20
         temp_point = [range(m).*cos(angle(m+1)+pose(3)) + pose(1), range(m).*sin(angle(m+1)+pose(3)) + pose(2)];
         V_lidar = [robotCurrentLocation; points(m,:); temp_point];
         P(m) = Polyhedron(V_lidar);
+       
         plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
@@ -47,11 +51,22 @@ for m=1:20
         temp_point = [range(m+1).*cos(angle(m)+pose(3)) + pose(1), range(m+1).*sin(angle(m)+pose(3)) + pose(2)];
         V_lidar = [robotCurrentLocation; temp_point; points(m+1,:)];
         P(m) = Polyhedron(V_lidar);
+        
         plotHandles = [plotHandles, plot(P(m), 'alpha', 0.2)];
 %         A(:,:,m) = P.A;
 %         b(:,m) = P.b;
     end
 end
+
+grid off
+xlim([0 17.9])
+ylim([0 17.2])
+
+% convex_seta=Polyhedron('V',points);
+% convex_seta.plot('alpha',0.2)
+% grid off
+% xlim([0 17.9])
+% ylim([0 17.2])
 
 %% The state of each step is in polar coordinates of the robot(r,theta)
 theta = sdpvar(1,N+1); % theta, relative to the robot
@@ -110,6 +125,9 @@ for k = 2:N
     % Penalize the distance to reference
     J=J+ (x_global(k)-z_ref(1))^2+(y_global(k)-z_ref(2))^2; 
 end
+
+%% Add more terminal cost for end point
+J=J+ 9*(x_global(N)-z_ref(1))^2+(y_global(N)-z_ref(2))^2;
 
 %% Using Optimize
 % Set options for YALMIP and solver

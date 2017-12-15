@@ -17,8 +17,9 @@ robot.showTrajectory(true);
 
 %% Set start point and goal
 % Set START to BEGIN
-% startLocation = [2.725 14.08];
+%startLocation = [2.725 14.08];
 startLocation = [2.7 1];
+%startLocation = [4.225 10.58]
 figure(1)
 hold all
 plot(startLocation(1),startLocation(2),'o')
@@ -31,6 +32,7 @@ plot(endLocation(1),endLocation(2),'x')
 
 %% Set up the inial position and pose
 initialOrientation = pi/2;
+%initialOrientation = 0;
 robotCurrentLocation = startLocation;
 robotCurrentPose = [robotCurrentLocation initialOrientation];
 robot.setRobotPose(robotCurrentPose);
